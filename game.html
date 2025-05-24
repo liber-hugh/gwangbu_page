@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfect Circle Game</title>
+    <link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/>
+    <link as="style" href="https://fonts.googleapis.com/css2?display=swap&amp;family=Manrope%3Awght%40400%3B500%3B700%3B800&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900&amp;family=Noto+Sans+KR%3Awght%40400%3B500%3B700%3B900" onload="this.rel='stylesheet'" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        canvas {
+            border: 1px solid white; /* For visibility, can be removed later */
+        }
+    </style>
+</head>
+<body class="bg-[#131712] text-white" style='font-family: "Noto Sans KR", Manrope, "Noto Sans", sans-serif;'>
+    <div id="scoreDisplay" class="text-2xl mb-4">Score: 0</div>
+    <canvas id="drawingCanvas" width="500" height="500"></canvas>
+    <div class="mt-4">
+        <button id="tryAgainButton" class="bg-[#53d22c] text-[#131712] font-bold py-2 px-4 rounded mr-2 hover:bg-green-400 transition-colors">
+            Try Again
+        </button>
+        <button id="backButton" class="bg-transparent text-white font-medium py-2 px-4 rounded border border-gray-700 hover:bg-gray-800 hover:border-gray-600 transition-colors">
+            Back to Menu
+        </button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const tryAgainButton = document.getElementById('tryAgainButton');
+        const backButton = document.getElementById('backButton');
+
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let drawnPoints = [];
+
+        // Set default drawing style
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 3;
+        ctx.lineCap = 'round'; // For smoother lines
+        ctx.lineJoin = 'round'; // For smoother line connections
+
+        function getMouseCoordinates(event) {
+            return [event.offsetX, event.offsetY];
+        }
+
+        function getTouchCoordinates(event) {
+            // Prevent scrolling and other default touch actions
+            event.preventDefault();
+            const touch = event.touches[0]; // Get the first touch point
+            const rect = canvas.getBoundingClientRect();
+            return [touch.clientX - rect.left, touch.clientY - rect.top];
+        }
+
+        function startDrawing(event) {
+            isDrawing = true;
+            drawnPoints = []; // Clear points for a new drawing
+            // Clear canvas for new drawing - moved to tryAgainButton
+            // ctx.clearRect(0, 0, canvas.width, canvas.height); 
+            if (event.type.startsWith('touch')) {
+                [lastX, lastY] = getTouchCoordinates(event);
+            } else {
+                [lastX, lastY] = getMouseCoordinates(event);
+            }
+            // Add the first point
+            drawnPoints.push({ x: lastX, y: lastY });
+        }
+
+        function draw(event) {
+            if (!isDrawing) return;
+
+            let currentX, currentY;
+            if (event.type.startsWith('touch')) {
+                event.preventDefault(); // Ensure default is prevented for touchmove
+                [currentX, currentY] = getTouchCoordinates(event);
+            } else {
+                [currentX, currentY] = getMouseCoordinates(event);
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(currentX, currentY);
+            ctx.stroke();
+            [lastX, lastY] = [currentX, currentY];
+            drawnPoints.push({ x: currentX, y: currentY });
+        }
+
+        function evaluateCircle() {
+            if (drawnPoints.length < 10) {
+                scoreDisplay.textContent = 'Score: 0 (Too few points!)';
+                return;
+            }
+
+            let sumX = 0, sumY = 0;
+            for (const point of drawnPoints) {
+                sumX += point.x;
+                sumY += point.y;
+            }
+            const centerX = sumX / drawnPoints.length;
+            const centerY = sumY / drawnPoints.length;
+
+            const radii = drawnPoints.map(point => {
+                const dx = point.x - centerX;
+                const dy = point.y - centerY;
+                return Math.sqrt(dx * dx + dy * dy);
+            });
+
+            const sumRadii = radii.reduce((sum, r) => sum + r, 0);
+            const avgRadius = sumRadii / radii.length;
+
+            if (avgRadius === 0) {
+                scoreDisplay.textContent = 'Score: 0';
+                return;
+            }
+
+            const sumSquaredDifferences = radii.reduce((sum, r) => {
+                const diff = r - avgRadius;
+                return sum + diff * diff;
+            }, 0);
+            const variance = sumSquaredDifferences / radii.length;
+            const stdDev = Math.sqrt(variance);
+
+            let score = Math.max(0, 100 * (1 - stdDev / avgRadius));
+            score = Math.round(score); // Round to nearest integer
+
+            scoreDisplay.textContent = `Score: ${score}`;
+        }
+
+        function stopDrawing() {
+            if (!isDrawing) return; // Prevent multiple calls if already stopped
+            isDrawing = false;
+            evaluateCircle();
+        }
+
+        // Mouse event listeners
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseleave', stopDrawing); // Stop drawing if mouse leaves canvas
+
+        // Touch event listeners
+        canvas.addEventListener('touchstart', startDrawing, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', stopDrawing);
+        canvas.addEventListener('touchcancel', stopDrawing); // Also stop on touch cancel
+
+        // Button event listeners
+        tryAgainButton.addEventListener('click', () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            scoreDisplay.textContent = 'Score: -';
+            drawnPoints = [];
+            // Reset isDrawing just in case it was stuck true, e.g. if user clicks try again mid-draw
+            isDrawing = false; 
+        });
+
+        backButton.addEventListener('click', () => {
+            window.location.href = 'index.html';
+        });
+
+    </script>
+</body>
+</html>

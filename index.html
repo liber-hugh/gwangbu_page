@@ -41,16 +41,30 @@
         당신의 실력을 시험하고 가장 완벽한 원을 그려보세요.
       </p>
 <div class="w-full px-6 space-y-4">
-<button class="flex w-full min-w-[84px] max-w-[480px] mx-auto cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 px-6 bg-[#53d22c] text-[#131712] text-lg font-bold leading-normal tracking-[0.015em] hover:bg-green-400 transition-colors">
+<button id="startChallengeButton" class="flex w-full min-w-[84px] max-w-[480px] mx-auto cursor-pointer items-center justify-center overflow-hidden rounded-full h-14 px-6 bg-[#53d22c] text-[#131712] text-lg font-bold leading-normal tracking-[0.015em] hover:bg-green-400 transition-colors">
 <span class="truncate">도전 시작</span>
 </button>
-<button class="flex w-full min-w-[84px] max-w-[480px] mx-auto cursor-pointer items-center justify-center overflow-hidden rounded-full h-12 px-5 bg-transparent text-white text-base font-medium leading-normal tracking-[0.015em] border border-gray-700 hover:bg-gray-800 hover:border-gray-600 transition-colors">
+<button id="howToPlayButton" class="flex w-full min-w-[84px] max-w-[480px] mx-auto cursor-pointer items-center justify-center overflow-hidden rounded-full h-12 px-5 bg-transparent text-white text-base font-medium leading-normal tracking-[0.015em] border border-gray-700 hover:bg-gray-800 hover:border-gray-600 transition-colors">
 <span class="truncate">게임 방법</span>
 </button>
 </div>
 </div>
 <div class="h-10 bg-transparent"></div>
 </div>
+
+<!-- How to Play Modal -->
+<div id="howToPlayModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden">
+  <div class="bg-[#2d372a] text-white p-6 rounded-lg shadow-xl max-w-sm w-full">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-2xl font-bold">게임 방법</h2>
+      <button id="closeModalButton" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+    </div>
+    <p class="text-gray-300">
+      마우스를 사용하여 최대한 완벽한 원을 그려보세요. 당신의 점수는 원의 완벽도에 따라 결정됩니다.
+    </p>
+  </div>
+</div>
+
 <style>
     @keyframes draw-circle {
       0% {
